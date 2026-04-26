@@ -1,0 +1,27 @@
+flowchart TD
+    U[Student / użytkownik] --> W[ADK Web Client]
+    W --> O[HackathonGenius<br/>SequentialAgent / orkiestrator]
+
+    O --> A1[IdeaAgent]
+    O --> A2[TechStackAgent]
+    O --> A3[TimelineAgent]
+    O --> A4[PitchAgent]
+
+    A1 --> T1[browse_hackathon_themes]
+    A2 --> T2[get_tech_stack_library]
+    A3 --> T3[get_sprint_templates]
+    A4 --> T4[get_pitch_frameworks]
+
+    A1 -. zapisuje .-> S[(session.state)]
+    A2 -. czyta i zapisuje .-> S
+    A3 -. czyta i zapisuje .-> S
+    A4 -. czyta i zapisuje .-> S
+
+    A1 --> M[model_config.py]
+    A2 --> M
+    A3 --> M
+    A4 --> M
+
+    M --> P[LM Proxy for VS Code<br/>localhost:4000/openai/v1]
+    P --> V[VS Code Language Model API]
+    V --> L[Wybrany model LLM]
