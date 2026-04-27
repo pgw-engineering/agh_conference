@@ -5,7 +5,15 @@ from google.adk.models.lite_llm import LiteLlm
 from dotenv import load_dotenv
 
 
-load_dotenv(Path(__file__).resolve().parent.parent / ".env", override=False)
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_ENV_CANDIDATES = [
+    _PROJECT_ROOT / "config" / ".env",
+    _PROJECT_ROOT / ".env",
+]
+for _env_path in _ENV_CANDIDATES:
+    if _env_path.exists():
+        load_dotenv(_env_path, override=False)
+        break
 
 
 def _normalize_model_name(model_name: str, api_base: str) -> str:
