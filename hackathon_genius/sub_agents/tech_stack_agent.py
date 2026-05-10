@@ -9,7 +9,7 @@ pobrać gotowe rekomendacje. Zapisuje wynik do 'tech_stacks'.
 
 from google.adk.agents import LlmAgent
 
-from ..model_config import build_demo_model
+from ..config import build_demo_model
 from ..tools.hackathon_tools import get_tech_stack_library
 
 tech_stack_agent = LlmAgent(

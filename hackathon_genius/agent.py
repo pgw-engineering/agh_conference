@@ -46,7 +46,8 @@ root_agent = SequentialAgent(
     name="HackathonGenius",
     description=(
         "Wieloagentowy pipeline, który zamienia temat hackathonu w kompletny "
-        "plan działania: 3 pomysły na projekt -> stack technologiczny -> plan sprintu -> pitch."
+        "plan działania: 3 pomysły na projekt -> stack technologiczny -> plan sprintu -> pitch. "
+        "Wszystkie wywołania modelu przechodzą pod spodem przez konfigurację zewnętrznego provider API."
     ),
     sub_agents=[
         idea_agent,        # Krok 1: wygeneruj 3 pomysły na projekt

@@ -10,7 +10,7 @@ To jest końcowy rezultat, z którego studenci mogą skorzystać na hackathonie.
 
 from google.adk.agents import LlmAgent
 
-from ..model_config import build_demo_model
+from ..config import build_demo_model
 from ..tools.hackathon_tools import get_pitch_frameworks
 
 pitch_agent = LlmAgent(

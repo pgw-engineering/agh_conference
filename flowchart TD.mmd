@@ -20,17 +20,31 @@
 
 flowchart TD
         U([Student / użytkownik]) --> W([ADK Web Client])
-        W --> O[HackathonGenius<br/>SequentialAgent / orkiestrator]
+        W --> DOCKER["🐳 Docker Sandbox<br/>(read-only, unprivileged, no-new-privileges)"]
+        
+        DOCKER --> O[HackathonGenius<br/>SequentialAgent / orkiestrator]
+
+        O --> SEC["🔐 Security Gate<br/>(IdeaAgent boundary)"]
+        
+        subgraph SECURITY["Security Callbacks"]
+            direction TB
+            RATE["⚡ Rate Limiter<br/>(10 req/min, burst=3)"]
+            INJ["🛡️ Prompt Injection Guard<br/>(22 patterns, 500 char max)"]
+            TOOL["🔒 Tool Argument Guard<br/>(allowlist, path traversal block)"]
+        end
+        
+        SEC --> RATE --> INJ --> TOOL
+        
+        TOOL --> A1["IdeaAgent<br/>(human boundary)"]
 
         subgraph ORCH[Pipeline agentów]
             direction LR
-            A1[IdeaAgent]
-            A2[TechStackAgent]
-            A3[TimelineAgent]
-            A4[PitchAgent]
+            A2["TechStackAgent<br/>(no callbacks)"]
+            A3["TimelineAgent<br/>(no callbacks)"]
+            A4["PitchAgent<br/>(no callbacks)"]
         end
 
-        O --> A1 --> A2 --> A3 --> A4
+        A1 --> A2 --> A3 --> A4
 
         subgraph TOOLS[Narzędzia]
             direction LR
@@ -45,21 +59,21 @@ flowchart TD
         A3 --> T3
         A4 --> T4
 
-        S[(session.state)]
-        A1 -. zapisuje .-> S
-        A2 -. czyta i zapisuje .-> S
-        A3 -. czyta i zapisuje .-> S
-        A4 -. czyta i zapisuje .-> S
+        S[(session.state<br/>internal trusted zone)]
+        A1 -. validated session .-> S
+        A2 -. internal state .-> S
+        A3 -. internal state .-> S
+        A4 -. internal state .-> S
 
-        M[model_config.py]
+        M[config/model_config.py]
         A1 --> M
         A2 --> M
         A3 --> M
         A4 --> M
 
-        P[LM Proxy for VS Code<br/>localhost:4000/openai/v1]
-        V[VS Code Language Model API]
-        L([Wybrany model LLM])
+        P["🔗 External LLM Service<br/>(OpenAI / Gemini / Custom API)"]
+        V[LLM Provider API]
+        L([Language Model])
         M --> P --> V --> L
 
         classDef agent fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0f172a;
@@ -67,9 +81,13 @@ flowchart TD
         classDef infra fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#3f2a00;
         classDef state fill:#fee2e2,stroke:#dc2626,stroke-width:1.5px,color:#3f0a0a;
         classDef user fill:#ede9fe,stroke:#7c3aed,stroke-width:1.5px,color:#2e1065;
+        classDef security fill:#dbeafe,stroke:#e11d48,stroke-width:2.5px,color:#500724;
+        classDef docker fill:#e0e7ff,stroke:#312e81,stroke-width:2.5px,color:#1e1b4b;
 
         class O,A1,A2,A3,A4 agent;
         class T1,T2,T3,T4 tool;
         class M,P,V,L infra;
         class S state;
         class U,W user;
+        class SEC,RATE,INJ,TOOL,SECURITY security;
+        class DOCKER docker;

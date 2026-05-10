@@ -51,7 +51,7 @@ Jeśli Twój podgląd Markdown w VS Code nie renderuje Mermaid, poniżej masz we
                                |
                                v
                     +------------------------+
-                    |    model_config.py     |
+                    | config/model_config.py |
                     +-----------+------------+
                                 |
                                 v
@@ -90,7 +90,7 @@ flowchart TD
     A3 -. czyta i zapisuje .-> S
     A4 -. czyta i zapisuje .-> S
 
-    A1 --> M[model_config.py]
+    A1 --> M[config/model_config.py]
     A2 --> M
     A3 --> M
     A4 --> M

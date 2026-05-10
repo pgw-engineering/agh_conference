@@ -1,5 +1,35 @@
 .venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.pycache
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+.mypy_cache/
+.pytest_cache/
+.tox/
+*.so
+.coverage
+htmlcov/
+# Secrets / local env files
 .env
+.env.*
+!.env.example
 config/.env
+config/.env.*
+!config/.env.example
+
+# ADK runtime — dane sesji i artefakty generowane przez adk web
+**/.adk/session.db
+.adk/artifacts/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/

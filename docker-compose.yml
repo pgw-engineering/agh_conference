@@ -1,0 +1,67 @@
+services:
+  hackathon-genius:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hackathon-genius:latest
+    container_name: hackathon-genius
+
+    ports:
+      - "8000:8000"
+
+    # Sekrety przez zmienne środowiskowe — plik .env NIE jest kopiowany do obrazu
+    env_file:
+      - .env
+    environment:
+      # Domyślnie korzystaj z Gemini API (OpenAI-compatible endpoint)
+      GEMINI_API_BASE: ${GEMINI_API_BASE:-https://generativelanguage.googleapis.com/v1beta/openai}
+
+    # Umożliwia dojście do hosta również na Linuxie (host-gateway)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # Sandbox — filesystem tylko do odczytu,
+    # z wyjątkiem katalogów wymagających zapisu
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+      - /app/.adk/artifacts:size=128m,uid=1001,gid=1001,mode=0775
+      - /app/hackathon_genius/.adk:size=32m,uid=1001,gid=1001,mode=0775   # session.db zapisywany przez adk web
+      - /usr/local/lib/python3.12/site-packages/google/adk/cli/browser/assets/config:size=4m,uid=1001,gid=1001,mode=0775
+
+    # Minimal capabilities — usuń wszystko, zostaw tylko to co potrzebne
+    cap_drop:
+      - ALL
+
+    # Zablokuj eskalację uprawnień (setuid, setgid)
+    security_opt:
+      - no-new-privileges:true
+
+    # Brak dostępu do sieci hosta — izolacja sieciowa
+    # Wymagane tylko do komunikacji z LM Proxy na hoście:
+    # zmień na host jeśli LM Proxy działa lokalnie poza kontenerem
+    # network_mode: host
+    networks:
+      - agent-net
+
+    # Limity zasobów — ochrona przed DoS
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          memory: 128M
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+networks:
+  agent-net:
+    driver: bridge

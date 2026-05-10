@@ -10,7 +10,8 @@ odczytać.
 
 from google.adk.agents import LlmAgent
 
-from ..model_config import build_demo_model
+from ..config import build_demo_model
+from ..security import prompt_injection_guard, tool_argument_guard
 from ..tools.hackathon_tools import browse_hackathon_themes
 
 idea_agent = LlmAgent(
@@ -47,4 +48,6 @@ Po przedstawieniu 3 pomysłów dodaj krótką linię:
 """,
     tools=[browse_hackathon_themes],
     output_key="hackathon_ideas",
+    before_model_callback=prompt_injection_guard,
+    before_tool_callback=tool_argument_guard,
 )
