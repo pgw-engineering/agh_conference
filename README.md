@@ -12,7 +12,7 @@ Projekt rozwiązuje rzeczywisty problem hackathonistów: **od notatki do profesj
 
 System pracuje jak zespół specjalistów, którzy pracują sekwencyjnie:
 
-1. **IdeaAgent** — „Bądź creative direktorem". Bierze surowy temat, rozwijając go w kierunku hackathonu. Szuka inspiracji w bazie podobnych pomysłów.
+1. **IdeaAgent** — „Bądź kreatywnym dyrektorem". Bierze surowy temat, rozwijając go w kierunku hackathonu. Szuka inspiracji w bazie podobnych pomysłów.
 
 2. **TechStackAgent** — „Bądź tech architektem". Patrzy na ideę i mówi: „To będziesz robić w React + FastAPI + PostgreSQL, oto dlaczego."
 

@@ -1,3 +1,16 @@
+# ========================
+#  Najważniejsze zabezpieczenia kontenera:
+#
+# 1. read_only: true           # Cały filesystem tylko do odczytu (immutable)
+# 2. tmpfs: [...]               # Writable tylko wybrane katalogi (np. /tmp, artefakty sesji)
+# 3. cap_drop: ALL              # Brak uprawnień kernela (żadnych capabilities)
+# 4. security_opt: no-new-privileges # Brak możliwości eskalacji uprawnień
+# 5. user: 1001                 # Uruchamiany jako nieuprzywilejowany user
+# 6. resource limits            # 1 CPU, 512MB RAM — ochrona przed DoS
+# 7. bridge network             # Izolacja sieciowa od hosta
+# 8. env_file/.env              # Sekrety tylko przez zmienne środowiskowe (nie w obrazie)
+# ========================
+
 services:
   hackathon-genius:
     build:

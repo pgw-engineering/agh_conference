@@ -1,8 +1,22 @@
 """
-Hackathon Genius - modul zabezpieczen agentow.
+Hackathon Genius — moduł zabezpieczeń agentów (security boundary).
 
-Zabezpieczenia sa stosowane wylacznie na granicy czlowiek -> system,
-nie w komunikacji wewnetrznej miedzy agentami.
+Ten moduł implementuje ochronę na granicy wejścia do systemu (human → agent):
+
+1. **Prompt injection guard** — wykrywa próby zmiany zachowania agenta przez prompt injection, jailbreak, manipulację poleceniami.
+2. **Rate limiting** — ogranicza liczbę żądań na użytkownika (token bucket, burst, refill rate).
+3. **Tool argument guard** — waliduje argumenty narzędzi (typy, długości, allowlisty, path traversal, znaki specjalne).
+4. **Tool isolation** — enforce'uje allowlistę narzędzi per agent (każdy agent może wywołać tylko wybrane narzędzia).
+
+**Architektura:**
+- Zabezpieczenia są stosowane WYŁĄCZNIE na granicy człowiek → system (np. wejście do IdeaAgent).
+- Komunikacja wewnętrzna między agentami (przez session.state) jest zaufana i nie przechodzi przez te bramki.
+- Dzięki temu atakujący nie może obejść zabezpieczeń przez chain-of-thought lub prompt chaining.
+
+**Przykład:**
+Użytkownik → [prompt_injection_guard + rate_limiter] → IdeaAgent → [tool_argument_guard + tool isolation] → narzędzie
+
+Każda blokada zwraca bezpieczną odmowę (nie wycieka szczegółów implementacji).
 """
 
 from __future__ import annotations
@@ -13,10 +27,8 @@ from typing import Optional
 
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.models.llm_request import LlmRequest
-from google.adk.models.llm_response import LlmResponse
 from google.adk.tools.base_tool import BaseTool
 from google.adk.tools.tool_context import ToolContext
-from google.genai.types import Content, Part
 
 from .rate_limiter import get_rate_limiter
 
@@ -62,14 +74,6 @@ _TOOL_ARG_CONSTRAINTS: dict[str, dict[str, dict]] = {
 _DANGEROUS_CHARS = re.compile(r"\.\.[\\/]|[;|&`$<>{}]")
 
 
-def _block_model(text: str) -> LlmResponse:
-    return LlmResponse(content=Content(role="model", parts=[Part(text=text)]))
-
-
-def _block_tool(text: str) -> dict:
-    return {"error": text}
-
-
 def prompt_injection_guard(
     callback_context: CallbackContext,
     llm_request: LlmRequest,
@@ -94,9 +98,9 @@ def prompt_injection_guard(
             user_id,
             status["remaining_tokens"],
         )
-        return _block_model(
-            "Zbyt wiele zadan. Prosze czekac przed nastepnym zadaniem.\n"
-            f"Refill rate: {status['refill_rate_per_second']:.2f} token/s."
+        raise ValueError(
+            f"[SECURITY BLOCK] Zbyt wiele żądań. Prosimy czekać.\n"
+            f"Refill: {status['refill_rate_per_second']:.2f} token/s."
         )
 
     user_text = ""
@@ -111,15 +115,18 @@ def prompt_injection_guard(
             len(user_text),
             MAX_INPUT_LENGTH,
         )
-        return _block_model(
-            f"Wejscie jest zbyt dlugie ({len(user_text)} znakow). Maksimum to {MAX_INPUT_LENGTH}."
+        raise ValueError(
+            f"[SECURITY BLOCK] Wejście jest zbyt długie ({len(user_text)} znaków). "
+            f"Maksimum to {MAX_INPUT_LENGTH}."
         )
 
     lower = user_text.lower()
     for pattern in _INJECTION_PATTERNS:
         if pattern in lower:
             logger.warning("[SECURITY] Prompt injection detected: %r", pattern)
-            return _block_model("Wykryto niedozwolona probe zmiany zachowania agenta.")
+            raise ValueError(
+                "[SECURITY BLOCK] Wykryto niedozwoloną próbę zmiany zachowania agenta."
+            )
 
     return None
 
@@ -142,9 +149,9 @@ def tool_argument_guard(
                 tool_name,
                 sorted(allowed),
             )
-            return _block_tool(
-                f"Agent '{agent_name}' nie ma uprawnien do narzedzia '{tool_name}'. "
-                f"Dozwolone narzedzia: {sorted(allowed)}."
+            raise ValueError(
+                f"[SECURITY BLOCK] Agent '{agent_name}' nie ma uprawnień do narzędzia '{tool_name}'. "
+                f"Dozwolone narzędzia: {sorted(allowed)}."
             )
 
     constraints = _TOOL_ARG_CONSTRAINTS.get(tool_name, {})
@@ -160,8 +167,8 @@ def tool_argument_guard(
                     tool_name,
                     value,
                 )
-                return _block_tool(
-                    f"Argument '{arg_name}' zawiera niedozwolone znaki (path traversal lub iniekcja)."
+                raise ValueError(
+                    f"[SECURITY BLOCK] Argument '{arg_name}' zawiera niedozwolone znaki (path traversal lub iniekcja)."
                 )
 
             max_len = constraint.get("max_len", 200)
@@ -173,8 +180,8 @@ def tool_argument_guard(
                     len(value),
                     max_len,
                 )
-                return _block_tool(
-                    f"Argument '{arg_name}' przekracza dozwolona dlugosc {max_len} (podano {len(value)})."
+                raise ValueError(
+                    f"[SECURITY BLOCK] Argument '{arg_name}' przekracza dozwoloną długość {max_len} (podano {len(value)})."
                 )
 
             if "allowlist" in constraint:
@@ -186,23 +193,23 @@ def tool_argument_guard(
                         value,
                         tool_name,
                     )
-                    return _block_tool(
-                        f"Wartosc '{value}' dla argumentu '{arg_name}' jest niedozwolona. "
+                    raise ValueError(
+                        f"[SECURITY BLOCK] Wartość '{value}' dla argumentu '{arg_name}' jest niedozwolona. "
                         f"Dozwolone: {sorted(constraint['allowlist'])}."
                     )
 
         elif isinstance(value, int):
             if "min" in constraint and value < constraint["min"]:
-                return _block_tool(
-                    f"Argument '{arg_name}' = {value} jest ponizej minimum ({constraint['min']})."
+                raise ValueError(
+                    f"[SECURITY BLOCK] Argument '{arg_name}' = {value} jest poniżej minimum ({constraint['min']})."
                 )
             if "max" in constraint and value > constraint["max"]:
-                return _block_tool(
-                    f"Argument '{arg_name}' = {value} przekracza maksimum ({constraint['max']})."
+                raise ValueError(
+                    f"[SECURITY BLOCK] Argument '{arg_name}' = {value} przekracza maksimum ({constraint['max']})."
                 )
             if "allowlist" in constraint and value not in constraint["allowlist"]:
-                return _block_tool(
-                    f"Wartosc {value} dla '{arg_name}' jest niedozwolona. "
+                raise ValueError(
+                    f"[SECURITY BLOCK] Wartość {value} dla '{arg_name}' jest niedozwolona. "
                     f"Dozwolone: {sorted(constraint['allowlist'])}."
                 )
 

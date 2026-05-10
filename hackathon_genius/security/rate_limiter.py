@@ -21,10 +21,31 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class RateLimitConfig:
-    """Konfiguracja limitow dla agenta."""
+    """
+    Konfiguracja limitów dla agenta (token bucket):
 
-    requests_per_minute: int = 60
-    burst_size: int = 3
+    Attributes:
+        requests_per_minute (int):
+            Ile żądań na minutę może wykonać użytkownik przy równomiernym tempie.
+            Przekłada się na szybkość "napełniania" tokenów w kubełku (refill_rate).
+
+        burst_size (int):
+            Maksymalna liczba żądań, które można wykonać "na raz" (w krótkim czasie),
+            zanim kubełek się wyczerpie. Pozwala na chwilowe "wybuchy" aktywności
+            bez natychmiastowego blokowania.
+
+        tokens_per_request (float):
+            Ile tokenów kosztuje pojedyncze żądanie. Pozwala różnicować koszt
+            różnych operacji (np. droższe narzędzia mogą kosztować więcej niż 1).
+
+    Przykład:
+        Jeśli requests_per_minute=10 i burst_size=3:
+        - Użytkownik może wykonać 3 żądania "od razu" (burst),
+        - Potem kolejne co 6 sekund (60/10), aż kubełek się napełni.
+    """
+
+    requests_per_minute: int = 1
+    burst_size: int = 2
     tokens_per_request: float = 1.0
 
 
@@ -147,8 +168,8 @@ def get_rate_limiter() -> RateLimiter:
     if _rate_limiter is None:
         _rate_limiter = RateLimiter(
             config=RateLimitConfig(
-                requests_per_minute=2,
-                burst_size=3,
+                requests_per_minute=1,
+                burst_size=2,
             )
         )
     return _rate_limiter
