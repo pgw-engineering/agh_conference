@@ -1,10 +1,96 @@
 # Hackathon Genius — Multi-Agent AI System
 
-Aplikacja Multi-Agent do transformacji pomysłu hackathonu w profesjonalny pitch z tech stackiem i timeline'em.
+## 🚀 O Projekcie
+
+**Hackathon Genius** to asystent AI, który zamienia surowy pomysł na hackathon w gotowy do zaprezentowania koncepcję. Wyobraź sobie: wchodzisz na hackathon z frazą "chciałbym zrobić coś z AI i medycyną" — a wychodzisz z kompletnym pitchem, tech stackiem i realizowalnym timelineiem.
+
+Projekt rozwiązuje rzeczywisty problem hackathonistów: **od notatki do profesjonalnego pomysłu to duży skok**. Zamiast spędzać 2-3 godziny na strukturyzowaniu i dopracowaniu, zespół może skupić się na kodzie.
 
 ---
 
-## 🔐 Ocena Bezpieczeństwa: **7/10**
+## 🔄 Jak to Działa
+
+System pracuje jak zespół specjalistów, którzy pracują sekwencyjnie:
+
+1. **IdeaAgent** — „Bądź creative direktorem". Bierze surowy temat, rozwijając go w kierunku hackathonu. Szuka inspiracji w bazie podobnych pomysłów.
+
+2. **TechStackAgent** — „Bądź tech architektem". Patrzy na ideę i mówi: „To będziesz robić w React + FastAPI + PostgreSQL, oto dlaczego."
+
+3. **TimelineAgent** — „Bądź project managerem". Tworzy realistyczny plan na 24/48 godzin hackathonu. Co w MVP, co w phase 2, co na koniec.
+
+4. **PitchAgent** — „Bądź oratorem". Package'uje wszystko w spójny, perswazyjny pitch gotowy dla jury.
+
+Każdy agent widzi pełny kontekst poprzednich decyzji (przez wspólny stan sesji), dzięki czemu wynik jest **coherentny**, nie chaotycznym zlepkiem.
+
+---
+
+## 📊 Co Dostajesz
+
+Wejście:
+```
+"chciałbym zrobić aplikację do trackowania nawyków używając machine learning"
+```
+
+Wyjście (po ~2-3 minutach):
+```
+✅ Koncepcja — Dlaczego to jest wartościowe dla użytkownika
+✅ Tech Stack — Konkretne narzędzia, frameworki, API
+✅ Timeline — Co zrobić w 6h, 12h, 24h
+✅ Pitch — Gotowy tekst do powiedzenia jury
+```
+
+---
+
+## 🎯 Cel Biznesowy
+
+Dla **uczestników hackathonów**: szybsza ideacja, mniej zmarnowanego czasu, więcej kodowania.
+
+Dla **organizatorów**: wyższa jakość pitchów (jury patrzy na faktyczne koncepty, nie half-baked notatki).
+
+---
+
+## 🛡️ Architektura (Orchestrator + 4 Sub-agenty)
+
+```
+[User Input] → [IdeaAgent + Security Guards] → [session.state]
+                                                    ↓
+                    [TechStackAgent] → [TimelineAgent] → [PitchAgent]
+                                                    ↓
+                                            [Final Output]
+```
+
+Agenci komunikują się przez wspólny stan (nie bezpośrednio), co pozwala na:
+- Jasne podziały odpowiedzialności
+- Łatwą testowanie każdej fazy
+- Kontrolę nad całym procesem
+
+---
+
+## ⚡ Szybki Start
+
+### Wymagania
+- Docker + Docker Compose
+- Google AI API key (Gemini 2.5 Flash) — [uzyskaj tu](https://aistudio.google.com)
+
+### Instalacja i Uruchomienie
+
+1. **Skonfiguruj env:**
+```bash
+cp .env.example .env
+# Edytuj .env i wstaw GEMINI_API_KEY
+nano .env
+```
+
+2. **Zbuduj i uruchom:**
+```bash
+docker compose up --build hackathon-genius
+```
+
+3. **Otwórz aplikację:**
+- ADK Web Client: http://localhost:3000
+- API healthcheck: http://localhost:8000/health
+
+---
 
 ### Status: ✅ Dobry dla Demo | ⚠️ Wymaga Upgrade'u na Produkcję
 

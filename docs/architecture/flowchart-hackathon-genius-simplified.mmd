@@ -57,8 +57,8 @@ flowchart TD
         A3 --> M
         A4 --> M
 
-        P[LM Proxy for VS Code<br/>localhost:4000/openai/v1]
-        V[VS Code Language Model API]
+        P[External LLM Service<br/>API Gateway]
+        V[LLM Provider Interface]
         L([Wybrany model LLM])
         M --> P --> V --> L
 
